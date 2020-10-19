@@ -14,7 +14,7 @@
   * historical (1981-2010), 
   * mid-future (2041-2070), 
   * far-future (2071-2100). 
-* required pressure levels for `ta` and `qa`: (925,850,700,600,500,400,300,200) hPa.
+* required pressure levels for `ta` (air temperature) and `hus` (specific humidity): (925,850,700,600,500,400,300,200) hPa.
 
 
 ## References
