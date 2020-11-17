@@ -67,16 +67,21 @@ totz_levs=np.shape(proftot)
 
 tpar500=np.full((totz_levs[0],z_levs[0]),999)
 
-dir_to_files = './input'
-qas_path = dir_to_files+'/huss_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_3hr_'+str(year)+'01010300-'+str(year2)+'01010000.nc'
+dir_to_files = './input' # path to your input data
+#qas_path = dir_to_files+'/huss_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_3hr_'+str(year)+'01010300-'+str(year2)+'01010000.nc'
 
-nc_id_qas=Dataset(qas_path, 'r')
-lats=nc_id_qas.variables['lat'][:]
-lons=nc_id_qas.variables['lon'][:]
+######### surface pressure input file ##############
+ps_path = dir_to_files+'/ps_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_3hr_'+str(year)+'01010300-'+str(year2)+'01010000.nc'
+####################################################
+
+nc_id_ps=Dataset(ps_path, 'r')
+# it's necessary to get the lats and lons for the file you're going to create at the end
+lats=nc_id_ps.variables['lat'][:]
+lons=nc_id_ps.variables['lon'][:]
 dims = np.shape(lats)
 
 ## some of the data are 3hrly, get 18z (Europe) only from the files ##
-t=nc_id_qas.variables['time'][:]
+t=nc_id_ps.variables['time'][:]
 date_time=num2date(t,units='hours since 1949-12-01 00:00:00',calendar='gregorian')
 zero_z_indexes3hr = []
 n=0
@@ -90,20 +95,24 @@ pprint('done getting dimensions and basic definitions')
 
 ## open most of the data needed to send to other procs on the RANK 0 proc ##
 if rank == 0:
-    ps_path = dir_to_files+'/ps_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_3hr_'+str(year)+'01010300-'+str(year2)+'01010000.nc'
+    #ps_path = dir_to_files+'/ps_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_3hr_'+str(year)+'01010300-'+str(year2)+'01010000.nc'
     
-    #get landmask file and data
+    ############## landmask file ################
     landmask_path = dir_to_files+'/sftlf_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_fx.nc'
+    #############################################
+    
     nc_id_landmask=Dataset(landmask_path, 'r')
     landmask_b=nc_id_landmask.variables['sftlf'][:]
     print('open and retrieve surface variable data')
-    nc_id_ps=Dataset(ps_path, 'r')
     ps=nc_id_ps.variables['ps'][zero_z_indexes3hr,:,:]
     ps=np.asarray(ps)
     
     print('get all indexes of 6hrly 0z times')
-    #get all the indexes where it is 00z from the 6hrly files
+    
+    ################### ta500 file ########################
     ta_path = dir_to_files+'/ta500_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_6hr_'+str(year)+'01010600-'+str(year2)+'01010000.nc'
+    #######################################################
+    
     nc_id_ta=Dataset(ta_path, 'r')
     t=nc_id_ta.variables['time'][:]
     date_time=num2date(t,units='hours since 1949-12-01 00:00:00',calendar='gregorian')
@@ -124,11 +133,11 @@ if rank == 0:
     temp_500=nc_id_ta.variables['ta500'][zero_z_indexes6hr,:,:]
     ta500=np.asarray(temp_500)
     
-    # Get t and q profiles only at 00z times
+    ############### Get t and q at 925, 850, 700 ###############
     for i in range(0,(z_levs[0]-1)+1,1):
        ta_path = dir_to_files+'/ta'+str(proflevs[i])+'_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_6hr_'+str(year)+'01010600-'+str(year2)+'01010000.nc'
        qa_path = dir_to_files+'/hus'+str(proflevs[i])+'_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_6hr_'+str(year)+'01010600-'+str(year2)+'01010000.nc'
-
+    
        nc_id_ta=Dataset(ta_path, 'r')
        temp_air=nc_id_ta.variables['ta'+str(proflevs[i])][zero_z_indexes6hr,:,:]
        temp_air=np.asarray(temp_air)
@@ -402,3 +411,6 @@ proc = subprocess.Popen(['date'], stdout=subprocess.PIPE, shell=True)
 (out,err) = proc.communicate()
 timedate=out.decode('utf-8')
 pprint( 'Done calculating CAPE at '+ str(timedate) )
+
+
+
