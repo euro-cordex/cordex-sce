@@ -68,10 +68,14 @@ plevs = np.array([925,850,700,600,500,400,300,200])
 z_levs=np.shape(plevs)
 ex_hour=18 #this is the solar maximum time that you will calculate
            #instability at
-dir_to_files = './input'
+dir_to_files = './input' # path to your input data
+
+######## surface specific humidity files ###########
 qas_path = dir_to_files+'/huss_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_3hr_'+str(year)+'01010300-'+str(year2)+'01010000.nc'
+####################################################
 
 nc_id_qas=Dataset(qas_path, 'r')
+# it's necessary to get the lats and lons for the file you're going to create at the end
 lats=nc_id_qas.variables['lat'][:]
 lons=nc_id_qas.variables['lon'][:]
 dims = np.shape(lats)
@@ -90,12 +94,15 @@ days=np.shape(zero_z_indexes3hr)
 pprint('done getting dimensions and basic definitions')
 
 if rank == 0:
+    ########### surface pressure and surface air temperature files ###############
     ps_path = dir_to_files+'/ps_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_3hr_'+str(year)+'01010300-'+str(year2)+'01010000.nc'
     tas_path = dir_to_files+'/tas_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_3hr_'+str(year)+'01010300-'+str(year2)+'01010000.nc'
+    ##############################################################################
     
-    
-    #get landmask file and data
+    ############## landmask file ################
     landmask_path = dir_to_files+'/sftlf_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_fx.nc'
+    #############################################
+    
     nc_id_landmask=Dataset(landmask_path, 'r')
     landmask_b=nc_id_landmask.variables['sftlf'][:]
     
@@ -136,9 +143,10 @@ if rank == 0:
     
     # Get t and q profiles only at 00z times
     for i in range(0,(z_levs[0]-1)+1,1):
+       ############################ opening the files for your t and q profile ####################################
        ta_path = dir_to_files+'/ta'+str(plevs[i])+'_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_6hr_'+str(year)+'01010600-'+str(year2)+'01010000.nc'
        qa_path = dir_to_files+'/hus'+str(plevs[i])+'_'+str(domain)+'_'+str(model)+'_'+str(scenario)+'_r1i1p1_ICTP-RegCM4-6_v1_6hr_'+str(year)+'01010600-'+str(year2)+'01010000.nc'
-
+       ############################################################################################################
        nc_id_ta=Dataset(ta_path, 'r')
        temp_air=nc_id_ta.variables['ta'+str(plevs[i])][zero_z_indexes6hr,:,:]
        temp_air=np.asarray(temp_air)
